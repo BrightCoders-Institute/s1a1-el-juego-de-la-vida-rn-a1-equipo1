@@ -37,10 +37,39 @@ var Agente = function(x, y, estado){
     this.vecinos = []; //Vecinos del agente
 
     this.addVecinos = function(){
-        
+        var xVecino;
+        var yVecino;
+
+        for (i = -1; i < 2; i++) {
+            for (j = -1; j < 2; j++) {
+                xVecino = (this.x + j + columnas) % columnas;
+                yVecino = (this.y + i + filas) % filas;
+
+                // Se descarta la celula actual
+                if (i!=0 || j!=0) {
+                    this.vecinos.push(tablero[yVecino][xVecino])
+                }
+            }
+        }
     }
 }
 
+function inicializaTablero(obj) {
+    var estado;
+
+    for (y = 0; y < filas; y++) {
+        for (x = 0; x < columnas; x++) {
+            estado = Math.floor(Math.random()*2);
+            obj[y][x] = new Agente(y, x, estado);
+        }
+    }
+
+    for (y = 0; y < filas; y++) {
+        for (x = 0; x < columnas; x++) {
+            obj[y][x].addVecinos();
+        }
+    }
+}
 
 function inicializa(){
 
@@ -59,6 +88,9 @@ function inicializa(){
 
     //Creamos el tablero
     tablero = creaArray2D(filas, columnas);
+
+    // Lo inicializamos
+    inicializaTablero(tablero);
 
     //Ejecutamos el bucle principal
     setInterval(function(){principal();},1000/fps);
