@@ -1,0 +1,15 @@
+{
+  "name": "s1a1-el-juego-de-la-vida-rn-a1-equipo1",
+  "version": "1.0.0",
+  "description": "![BrightCoders Logo](img/logo.jpg)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "eslint-config-google": "^0.14.0"
+  }
+}
