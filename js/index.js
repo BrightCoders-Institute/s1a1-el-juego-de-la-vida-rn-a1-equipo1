@@ -19,8 +19,8 @@ var verde = '#008000';
 
 function creaArray2D(f,c){
     var obj = new Array(f);
-    for(y=0; y<f; y++){
-        obj[y]= new Array(c);
+    for(let y=0; y<f; y++){
+        obj[y] = new Array(c).fill(0);
     }
 
     return obj;
@@ -52,6 +52,51 @@ var Agente = function(x, y, estado){
             }
         }
     }
+
+    this.dibuja = function(){
+        var color; 
+
+        if(this.estado ==  1){
+            color =  blanco; 
+        }
+        else {
+            color =  verde; 
+        }
+        ctx.fillStyle = color ;
+        ctx.fillRect (this.x * tileX, this.y * tileY, tileX, tileY); 
+    }
+
+    // programamos las leyes de coway 
+
+    this.nuevoCiclo  =  function () {
+        var suma =  0; 
+
+        // calculamos la cantidad de vecinos vivos 
+        
+        for ( i = 0; i< this.vecinos.length; i++){
+            suma += this.vecinos[i].estado;
+        }
+
+        //Aplicamos las normas
+        
+        this.estadoProx = this.estado; // por defecto lo dejamos igual
+
+        //Muerte: tiene menos de 2 o mas de tres 
+
+        if ( suma <2 || suma> 3 ){
+            this.estadoProx =  0;
+
+        }
+      //  VIDA/ REPRODUCCION: Tiene 3 vecinos 
+
+        if(suma == 3 ){
+            this.estadoProx =  1; 
+        }
+    } 
+
+    this.mutacion =  function() {
+        this.estado = this.estadoProx; 
+    }
 }
 
 function inicializaTablero(obj) {
@@ -60,7 +105,7 @@ function inicializaTablero(obj) {
     for (y = 0; y < filas; y++) {
         for (x = 0; x < columnas; x++) {
             estado = Math.floor(Math.random()*2);
-            obj[y][x] = new Agente(y, x, estado);
+            obj[y][x] = new Agente(x, y, estado);
         }
     }
 
@@ -69,13 +114,15 @@ function inicializaTablero(obj) {
             obj[y][x].addVecinos();
         }
     }
+
+
 }
 
 function inicializa(){
 
     //Asiociamos el canvas
-    canvas = Document.getElementById('pantalla');
-    ctx = canvas.getContext('2D');
+    canvas = document.getElementById("pantalla");
+    ctx = canvas.getContext('2d');
 
     //Ajustamos el tamaño
     canvas.width = canvasX;
@@ -96,12 +143,38 @@ function inicializa(){
     setInterval(function(){principal();},1000/fps);
 }
 
+function dibujaTablero (obj) {
+
+    //Dibuja los agentes 
+
+    for( y=0; y<filas; y++){
+        for(x=0; x< columnas; x++){
+            obj[y][x].dibuja(); 
+        }
+    }
+
+    // calcula el siguiente ciclo
+    for(y=0; y<filas; y++){
+        for(x=0; x<columnas; x++){
+            obj[y][x].nuevoCiclo(); 
+        }
+    }
+
+    // Aplica la mutacion 
+    for(y=0; y<filas; y++){
+        for(x=0; x<columnas; x++){
+            obj[y][x].mutacion(); 
+        }
+    }
+}
+
 function borrarCanvas(){
     canvas.width  = canvas.width;
     canvas.height = canvas.height;
 }
 
 function principal(){
-    console.log('fotograma');
     borrarCanvas();   
+    dibujaTablero(tablero); 
+
 }
