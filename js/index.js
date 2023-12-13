@@ -2,12 +2,12 @@ let canvas;
 let ctx;
 const fps = 1;
 
-const canvasX = 500; // pixels ancho
-const canvasY = 500; // pixels alto
+const canvasX = 500; // we define the weidght of the canvas
+const canvasY = 500; // we define the height of the canvas
 let tileX;
 let tileY;
 
-// Iniciar el tablero
+// Start the board
 let tablero;
 const filas = parseInt(prompt('Introduce las filas'));
 const columnas = parseInt(prompt('Introduce las columnas'));
@@ -15,31 +15,30 @@ const columnas = parseInt(prompt('Introduce las columnas'));
 const blanco = '#FFFFFF';
 const verde = '#008000';
 
-// expected @param tag for parameter num1 but found num instead
-// missing @param tag for parameter num2
-// missing return type
+
 /**
- * Add two numbers.
- * @param {number} f The first number.
- * @param {number} c The first number.
- * @returns obj The sum of the two numbers.
+ * Expecting 2 parameters to determine the 2D array dimentions.
+ * @param {number} f The height of the array.
+ * @param {number} c The width if the array.
+ * @return {obj} The array.
  */
-function creaArray2D(f,c) {
+function creaArray2D(f, c) {
   const obj = new Array(f);
   for (let y=0; y<f; y++) {
     obj[y] = new Array(c).fill(0);
   }
-  
+
   return obj;
 }
 
-// Objeto Agente o Turmita
+// Agent or Turmite Object
+
 const Agente = function(x, y, estado) {
   this.x = x;
   this.y = y;
   this.estado = estado;
   this.estadoProx = this.estado;
-  this.vecinos = []; // Vecinos del agente
+  this.vecinos = []; // Neighbors of the agent
 
   this.addVecinos = function() {
     let xVecino;
@@ -50,7 +49,7 @@ const Agente = function(x, y, estado) {
         xVecino = (this.x + j + columnas) % columnas;
         yVecino = (this.y + i + filas) % filas;
 
-        // Se descarta la celula actual
+        // The current cell is discarded
         if (i!=0 || j!=0) {
           this.vecinos.push(tablero[yVecino][xVecino]);
         }
@@ -62,123 +61,137 @@ const Agente = function(x, y, estado) {
     let color;
 
     if (this.estado == 1) {
-      color = blanco;
-    } else {
       color = verde;
+    } else {
+      color = blanco;
     }
 
     ctx.fillStyle = color;
     ctx.fillRect(this.x * tileX, this.y * tileY, tileX, tileY);
   };
 
-  // programamos las leyes de coway
+  // We program coway laws
 
   this.nuevoCiclo = function() {
     let suma = 0;
 
-    // calculamos la cantidad de vecinos vivos
+    // We calculate the number of living neighbors
 
     for ( i = 0; i< this.vecinos.length; i++) {
       suma += this.vecinos[i].estado;
     }
 
-    // Aplicamos las normas
+    // Aplicate the rules of the game.
 
-    this.estadoProx = this.estado; // por defecto lo dejamos igual
+    this.estadoProx = this.estado; // we assume that the state wont change
 
-    // Muerte: tiene menos de 2 o mas de tres
+    // dead: have less than 2 or more than 3 neighbors
 
     if (suma <2 || suma> 3 ) {
       this.estadoProx = 0;
     }
-    //  VIDA/ REPRODUCCION: Tiene 3 vecinos
+    //  life: have 3 neighbors
 
     if (suma == 3) {
       this.estadoProx = 1;
     }
   };
 
-    this.mutacion =  function() {
-        this.estado = this.estadoProx;
+  this.mutacion = function() {
+    this.estado = this.estadoProx;
+  };
+};
+
+/**
+ * Add two numbers.
+ * @param {obj} obj is the array to be initialized.
+ */
+function inicializaTablero(obj) {
+  let estado;
+
+  for (y = 0; y < filas; y++) {
+    for (x = 0; x < columnas; x++) {
+      estado = Math.floor(Math.random()*2);
+      obj[y][x] = new Agente(x, y, estado);
     }
+  }
+
+  for (y = 0; y < filas; y++) {
+    for (x = 0; x < columnas; x++) {
+      obj[y][x].addVecinos();
+    }
+  }
 }
 
-function inicializaTablero(obj){
-    var estado;
+/**
+ * In this function we create the canvas and set the size.
+ */
+function inicializa() {
+  // Match the canvas to the screen.
+  canvas = document.getElementById('pantalla');
+  ctx = canvas.getContext('2d');
 
-    for (y = 0; y < filas; y++) {
-        for (x = 0; x < columnas; x++) {
-            estado = Math.floor(Math.random()*2);
-            obj[y][x] = new Agente(x, y, estado);
-        }
-    }
+  // Fit the canvas to the screen.
+  canvas.width = canvasX;
+  canvas.height = canvasY;
 
-    for (y = 0; y < filas; y++) {
-        for (x = 0; x < columnas; x++) {
-            obj[y][x].addVecinos();
-        }
-    }
+  // Calculate the size of the titles.
+  tileX = Math.floor(canvasX/filas);
+  tileY = Math.floor(canvasY/columnas);
 
+  // Create the board.
+  tablero = creaArray2D(filas, columnas);
 
+  // Execute the function to initialize the board.
+  inicializaTablero(tablero);
+
+  // Execute the function principal every 1/fps seconds.
+  setInterval(function() {
+    principal();
+  }, 1000/fps);
 }
 
-function inicializa(){
+/**
+ * @param {obj} obj the array to be drawn.
+ */
+function dibujaTablero(obj) {
+  // draw the agents
 
-    //Asiociamos el canvas
-    canvas = document.getElementById("pantalla");
-    ctx = canvas.getContext('2d');
-
-    //Ajustamos el tamaño
-    canvas.width = canvasX;
-    canvas.height = canvasY;
-
-    //calcular los tamaños de los tiles
-
-    tileX = Math.floor(canvasX/filas);
-    tileY = Math.floor(canvasY/columnas);
-
-    //Creamos el tablero
-    tablero = creaArray2D(filas, columnas);
-
-    // Lo inicializamos
-    inicializaTablero(tablero);
-
-    //Ejecutamos el bucle principal
-    setInterval(function(){principal();},1000/fps);
-}
-
-function dibujaTablero (obj) {
-
-    //Dibuja los agentes 
-
-    for( y=0; y<filas; y++){
-        for(x=0; x< columnas; x++){
-            obj[y][x].dibuja(); 
-        }
+  for (y=0; y<filas; y++ ) {
+    for (x=0; x< columnas; x++) {
+      obj[y][x].dibuja();
     }
+  }
 
-    // calcula el siguiente ciclo
-    for(y=0; y<filas; y++){
-        for(x=0; x<columnas; x++){
-            obj[y][x].nuevoCiclo(); 
-        }
+  // calculate the next cycle
+  for (y=0; y<filas; y++) {
+    for (x=0; x<columnas; x++) {
+      obj[y][x].nuevoCiclo();
     }
+  }
 
-    // Aplica la mutacion 
-    for(y=0; y<filas; y++){
-        for(x=0; x<columnas; x++){
-            obj[y][x].mutacion(); 
-        }
+  // Aplicate the mutation
+  for (y=0; y<filas; y++) {
+    for (x=0; x<columnas; x++) {
+      obj[y][x].mutacion();
     }
+  }
 }
 
-function borrarCanvas(){
-    canvas.width  = canvas.width;
-    canvas.height = canvas.height;
+/**
+ * The function resizes the canvas using data from the same canvas.
+ */
+function borrarCanvas() {
+  canvas.width = canvas.width;
+  canvas.height = canvas.height;
 }
 
-function principal(){
-    borrarCanvas();   
-    dibujaTablero(tablero); 
-
+/**
+ * In this function we will call the functions that will be executed.
+ */
+function principal() {
+  borrarCanvas();
+  dibujaTablero(tablero);
 }
+
+console.log(inicializa());
