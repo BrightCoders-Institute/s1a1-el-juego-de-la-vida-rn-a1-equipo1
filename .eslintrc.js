@@ -23,5 +23,6 @@ module.exports = {
   },
   'rules': {
     'linebreak-style': 'off',
+    'max-len': [true, 140], // Agrega la regla max-len aquí
   },
 };

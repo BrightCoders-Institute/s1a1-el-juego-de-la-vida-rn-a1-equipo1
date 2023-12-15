@@ -1,197 +1,88 @@
-let canvas;
-let ctx;
-const fps = 1;
 
-const canvasX = 500; // we define the weidght of the canvas
-const canvasY = 500; // we define the height of the canvas
-let tileX;
-let tileY;
+//Tamaño del tablero
+const filas = 8;
+const columnas = 4;
 
-// Start the board
-let tablero;
-const filas = parseInt(prompt('Introduce las filas'));
-const columnas = parseInt(prompt('Introduce las columnas'));
-
-const blanco = '#FFFFFF';
-const verde = '#008000';
-
-
-/**
- * Expecting 2 parameters to determine the 2D array dimentions.
- * @param {number} f The height of the array.
- * @param {number} c The width if the array.
- * @return {obj} The array.
- */
-function creaArray2D(f, c) {
-  const obj = new Array(f);
-  for (let y=0; y<f; y++) {
-    obj[y] = new Array(c).fill(0);
+// Inicializar el tablero de manera aleatoria
+function inicializarTablero() {
+  const tablero = [];
+  for (let i = 0; i < filas; i++) {
+    const fila = [];
+    for (let j = 0; j < columnas; j++) {
+      fila.push(Math.round(Math.random()));
+    }
+    tablero.push(fila);
   }
-
-  return obj;
+  return tablero;
 }
 
-// Agent or Turmite Object
+// Imprimir el tablero en la consola
+function imprimirTablero(tablero) {
+  for (let i = 0; i < filas; i++) {
+    let fila = '';
+    for (let j = 0; j < columnas; j++) {
+      fila += tablero[i][j] ? '■' : '□';
+      fila += ' ';
+    }
+    console.log(fila);
+  }
+  console.log('\n');
+}
 
-const Agente = function(x, y, estado) {
-  this.x = x;
-  this.y = y;
-  this.estado = estado;
-  this.estadoProx = this.estado;
-  this.vecinos = []; // Neighbors of the agent
-
-  this.addVecinos = function() {
-    let xVecino;
-    let yVecino;
-
-    for (i = -1; i < 2; i++) {
-      for (j = -1; j < 2; j++) {
-        xVecino = (this.x + j + columnas) % columnas;
-        yVecino = (this.y + i + filas) % filas;
-
-        // The current cell is discarded
-        if (i!=0 || j!=0) {
-          this.vecinos.push(tablero[yVecino][xVecino]);
-        }
+// Contar el número de vecinos vivos al rededor de una celda
+function contarVecinos(tablero, fila, columna) {
+  let vecinos = 0;
+  for (let i = fila - 1; i <= fila + 1; i++) {
+    for (let j = columna - 1; j <= columna + 1; j++) {
+      if (i >= 0 && i < filas && j >= 0 && j < columnas && (i !== fila || j !== columna)) {
+        vecinos += tablero[i][j];
       }
     }
-  };
+  }
+  return vecinos;
+}
 
-  this.dibuja = function() {
-    let color;
-
-    if (this.estado == 1) {
-      color = verde;
-    } else {
-      color = blanco;
+// Aplicar las reglas del Juego de la Vida
+function aplicarReglas(tablero) {
+  const nuevoTablero = [];
+  for (let i = 0; i < filas; i++) {
+    const nuevaFila = [];
+    for (let j = 0; j < columnas; j++) {
+      const vecinos = contarVecinos(tablero, i, j);
+      if (tablero[i][j] === 1) {
+        nuevaFila.push(vecinos === 2 || vecinos === 3 ? 1 : 0);
+      } else {
+        nuevaFila.push(vecinos === 3 ? 1 : 0);
+      }
     }
+    nuevoTablero.push(nuevaFila);
+  }
+  return nuevoTablero;
+}
 
-    ctx.fillStyle = color;
-    ctx.fillRect(this.x * tileX, this.y * tileY, tileX, tileY);
-  };
+// Ejecuta el juego
+function juegoDeLaVida(generaciones) {
+  let tablero = inicializarTablero();
+  for (let generacion = 0; generacion < generaciones; generacion++) {
+    console.log(`Generación ${generacion + 1}:`);
+    imprimirTablero(tablero);
+    tablero = aplicarReglas(tablero);
+  }
+}
 
-  // We program coway laws
+// Iniciar el juego con 10 generaciones
+juegoDeLaVida(10);
 
-  this.nuevoCiclo = function() {
-    let suma = 0;
-
-    // We calculate the number of living neighbors
-
-    for ( i = 0; i< this.vecinos.length; i++) {
-      suma += this.vecinos[i].estado;
-    }
-
-    // Aplicate the rules of the game.
-
-    this.estadoProx = this.estado; // we assume that the state wont change
-
-    // dead: have less than 2 or more than 3 neighbors
-
-    if (suma <2 || suma> 3 ) {
-      this.estadoProx = 0;
-    }
-    //  life: have 3 neighbors
-
-    if (suma == 3) {
-      this.estadoProx = 1;
-    }
-  };
-
-  this.mutacion = function() {
-    this.estado = this.estadoProx;
-  };
+const GofL = {
+  filas,
+  columnas,
+  inicializarTablero,
+  imprimirTablero,
+  contarVecinos,
+  aplicarReglas,
+  juegoDeLaVida
 };
 
-/**
- * Add two numbers.
- * @param {obj} obj is the array to be initialized.
- */
-function inicializaTablero(obj) {
-  let estado;
+module.exports = { contarVecinos };
 
-  for (y = 0; y < filas; y++) {
-    for (x = 0; x < columnas; x++) {
-      estado = Math.floor(Math.random()*2);
-      obj[y][x] = new Agente(x, y, estado);
-    }
-  }
-
-  for (y = 0; y < filas; y++) {
-    for (x = 0; x < columnas; x++) {
-      obj[y][x].addVecinos();
-    }
-  }
-}
-
-/**
- * In this function we create the canvas and set the size.
- */
-function inicializa() {
-  // Match the canvas to the screen.
-  canvas = document.getElementById('pantalla');
-  ctx = canvas.getContext('2d');
-
-  // Fit the canvas to the screen.
-  canvas.width = canvasX;
-  canvas.height = canvasY;
-
-  // Calculate the size of the titles.
-  tileX = Math.floor(canvasX/filas);
-  tileY = Math.floor(canvasY/columnas);
-
-  // Create the board.
-  tablero = creaArray2D(filas, columnas);
-
-  // Execute the function to initialize the board.
-  inicializaTablero(tablero);
-
-  // Execute the function principal every 1/fps seconds.
-  setInterval(function() {
-    principal();
-  }, 1000/fps);
-}
-
-/**
- * @param {obj} obj the array to be drawn.
- */
-function dibujaTablero(obj) {
-  // draw the agents
-
-  for (y=0; y<filas; y++ ) {
-    for (x=0; x< columnas; x++) {
-      obj[y][x].dibuja();
-    }
-  }
-
-  // calculate the next cycle
-  for (y=0; y<filas; y++) {
-    for (x=0; x<columnas; x++) {
-      obj[y][x].nuevoCiclo();
-    }
-  }
-
-  // Aplicate the mutation
-  for (y=0; y<filas; y++) {
-    for (x=0; x<columnas; x++) {
-      obj[y][x].mutacion();
-    }
-  }
-}
-
-/**
- * The function resizes the canvas using data from the same canvas.
- */
-function borrarCanvas() {
-  canvas.width = canvas.width;
-  canvas.height = canvas.height;
-}
-
-/**
- * In this function we will call the functions that will be executed.
- */
-function principal() {
-  borrarCanvas();
-  dibujaTablero(tablero);
-}
-
-console.log(inicializa());
+// contarVecinos, inicializarTablero, aplicarReglas
