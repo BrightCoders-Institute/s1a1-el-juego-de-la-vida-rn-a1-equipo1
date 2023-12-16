@@ -83,6 +83,5 @@ const GofL = {
   juegoDeLaVida
 };
 
-module.exports = { contarVecinos };
-
+module.exports = { contarVecinos, inicializarTablero, imprimirTablero, aplicarReglas };
 // contarVecinos, inicializarTablero, aplicarReglas
